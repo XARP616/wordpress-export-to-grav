@@ -1,3 +1,38 @@
+# wordpress-export-to-grav
+
+The aim of this fork is to produce markdown pages *specific* for **Grav CMS** from a **WP XML export**.
+
+This is a **modification** of a **WordPress to markdown exporter**. You can find the **original** readme after this one (keep scrolling :v), or have a look at it on the original [repository](https://github.com/lonekorean/wordpress-export-to-markdown).
+
+- **Note that this project was thought to export blog entries *exclusively*.**
+- **Also, this project won't get any maintenance or support whatsoever**. If you want to make a better version, feel free to fork it.
+
+## Changes
+- **Summary and text** properties added to be displayed in a blog item list.
+- `index.md -> blog_item.md` to match our template name.
+- Added **route aliases** per blog entry.
+- **Images** get **stored** at `.md` level instead of inside a subdirectory (this may arise issues if not split folders).
+- A **cover image** is set.
+- All entries with category `Aviso Novedades AP` get omitted.
+- WordPress ***custom*** categories get 'translated' into **Grav** taxonomies. You will probably want to change them, though it should not mean much effort.
+
+**Disclaimer:** Grav twig template files may need some tweaking in order to work.
+
+## Additions
+- **A *bash* script to wipe the `.md` files of the previous output.**
+
+    It was created for not having to re-download all the images of the original webpage
+every time this project was run. In case you want to update the images you can remove those you want to re-download
+or simply delete the output folder completely.
+
+## How to run
+Either run the *previously mentioned script* or run 
+```
+npm install && node index.js
+```
+as in the original project.
+
+
 # wordpress-export-to-markdown
 
 A script that converts a WordPress export XML file into Markdown files suitable for a static site generator ([Gatsby](https://www.gatsbyjs.org/), [Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/), etc.).

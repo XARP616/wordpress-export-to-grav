@@ -69,7 +69,9 @@ function collectPosts(data, postTypes, config) {
 					title: getPostTitle(post),
 					date: getPostDate(post),
 					categories: getCategories(post),
-					tags: getTags(post)
+					tags: getTags(post),
+					image: false
+
 				},
 				content: translator.getPostContent(post, turndownService, config)
 			}));
@@ -193,6 +195,8 @@ function mergeImagesIntoPosts(images, posts) {
 			if (image.id === post.meta.coverImageId) {
 				shouldAttach = true;
 				post.frontmatter.coverImage = shared.getFilenameFromUrl(image.url);
+				post.frontmatter.image = true;
+
 			}
 
 			if (shouldAttach && !post.meta.imageUrls.includes(image.url)) {

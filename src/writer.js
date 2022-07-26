@@ -7,6 +7,8 @@ const requestPromiseNative = require('request-promise-native');
 const shared = require('./shared');
 const settings = require('./settings');
 
+let all_categories = new Set();
+
 async function writeFilesPromise(posts, config) {
 	await writeMarkdownFilesPromise(posts, config);
 	await writeImageFilesPromise(posts, config);
@@ -51,6 +53,12 @@ async function writeMarkdownFilesPromise(posts, config ) {
 			// already exists, don't need to save again
 			skipCount++;
 			return [];
+		} else if (post.frontmatter.categories.indexOf("aviso-novedades-ap") !== -1) {
+			console.log("SKIPPING OVER aviso-novedades-ap");
+			console.log("|_ filename: " + post.meta.slug);
+			// We will exclude the aviso-novedades-ap category
+			skipCount++;
+			return [];
 		} else {
 			const payload = {
 				item: post,
@@ -69,6 +77,9 @@ async function writeMarkdownFilesPromise(posts, config ) {
 	} else {
 		console.log(`\nSaving ${remainingCount} posts (${skipCount} already exist)...`);
 		await processPayloadsPromise(payloads, loadMarkdownFilePromise);
+
+		console.log("ALL CATEGORIES: ")
+		for (let item of all_categories) console.log("   |_ category: " + item)
 	}
 }
 
@@ -78,10 +89,40 @@ async function loadMarkdownFilePromise(post) {
 	Object.entries(post.frontmatter).forEach(([key, value]) => {
 		let outputValue;
 		if (Array.isArray(value)) {
-			if (value.length > 0) {
-				// array of one or more strings
-				outputValue = value.reduce((list, item) => `${list}\n  - "${item}"`, '');
+
+			if (key === 'categories') {
+				outputValue = '\n    category:';
+
+				if (value.length > 0) {
+					value.forEach(function(element){
+
+						// Make it look good
+						element = element.replace(/-/g, ' '); // remove hyphens
+						element = element.charAt(0).toUpperCase() + element.slice(1); // first capital
+
+						all_categories.add(element);
+						// Append
+						outputValue += '\n        - \'' + element + '\''
+					});
+				}
+
+				key = 'taxonomy';
+
+			} else {
+				if (value.length > 0) {
+					outputValue = value.reduce((list, item) => `${list}\n  - "${item}"`, '');
+					// array of one or more strings
+				}
 			}
+
+		} else if (key === 'image' && value === true) {
+			outputValue = '\n    summary:'
+			outputValue+= '\n        enabled: \'1\'';
+			outputValue+= '\n        file: ' + post.frontmatter.coverImage;
+			outputValue+= '\n    text:'
+			outputValue+= '\n        enabled: \'1\'';
+			outputValue+= '\n        file: ' + post.frontmatter.coverImage;
+
 		} else {
 			// single string value
 			const escapedValue = (value || '').replace(/"/g, '\\"');
@@ -90,9 +131,17 @@ async function loadMarkdownFilePromise(post) {
 
 		if (outputValue !== undefined) {
 			output += `${key}: ${outputValue}\n`;
+
 		}
 	});
 
+	// alias
+	output += 'routes:';
+	output += '\n    aliases:';
+	output += '\n        - /blog/' + post.meta.slug;
+	output += '\n';
+
+	// end of header
 	output += `---\n\n${post.content}\n`;
 	return output;
 }
@@ -103,7 +152,7 @@ async function writeImageFilesPromise(posts, config) {
 	let delay = 0;
 	const payloads = posts.flatMap(post => {
 		const postPath = getPostPath(post, config);
-		const imagesDir = path.join(path.dirname(postPath), 'images');
+		const imagesDir = path.join(path.dirname(postPath), ''); // IMAGES DIRECTORY
 		return post.meta.imageUrls.flatMap(imageUrl => {
 			const filename = shared.getFilenameFromUrl(imageUrl);
 			const destinationPath = path.join(imagesDir, filename);
@@ -183,7 +232,7 @@ function getPostPath(post, config) {
 
 	// use slug fragment as folder or filename as specified
 	if (config.postFolders) {
-		pathSegments.push(slugFragment, 'index.md');
+		pathSegments.push(slugFragment, 'blog_item.md');
 	} else {
 		pathSegments.push(slugFragment + '.md');
 	}
